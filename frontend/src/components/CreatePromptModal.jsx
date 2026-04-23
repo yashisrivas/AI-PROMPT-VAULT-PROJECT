@@ -1,0 +1,112 @@
+import { useState } from 'react'
+import ErrorAlert from './ErrorAlert'
+
+export default function CreatePromptModal({ onClose, onCreate }) {
+    const [form, setForm] = useState({ title: '', content: '', visibility: 'PRIVATE' })
+    const [error, setError] = useState('')
+    const [loading, setLoading] = useState(false)
+
+    const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
+
+    const handleSubmit = async (e) => {
+        e.preventDefault()
+        setError('')
+        setLoading(true)
+        try {
+            await onCreate(form)
+            onClose()
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to create prompt.')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+
+            {/* Modal */}
+            <div className="relative w-full max-w-lg bg-gray-900 rounded-2xl border border-gray-700 shadow-2xl p-6">
+                <div className="flex items-center justify-between mb-5">
+                    <h2 className="text-lg font-semibold text-white">New Prompt</h2>
+                    <button
+                        onClick={onClose}
+                        className="p-1.5 rounded-lg text-gray-500 hover:text-gray-300 hover:bg-gray-800 transition"
+                    >
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                {error && <ErrorAlert message={error} onDismiss={() => setError('')} />}
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-1.5">Title</label>
+                        <input
+                            name="title"
+                            value={form.title}
+                            onChange={handleChange}
+                            required
+                            placeholder="e.g. Code Review Prompt"
+                            className="w-full px-4 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-1.5">Content</label>
+                        <textarea
+                            name="content"
+                            value={form.content}
+                            onChange={handleChange}
+                            required
+                            rows={5}
+                            placeholder="Write your prompt here…"
+                            className="w-full px-4 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition resize-none"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-1.5">Visibility</label>
+                        <div className="flex gap-2 p-1 bg-gray-800 rounded-xl border border-gray-700">
+                            <button
+                                type="button"
+                                onClick={() => setForm({ ...form, visibility: 'PRIVATE' })}
+                                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${form.visibility === 'PRIVATE' ? 'bg-gray-700 text-white shadow-sm' : 'text-gray-500 hover:text-gray-400'}`}
+                            >
+                                Private Vault
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setForm({ ...form, visibility: 'PUBLIC' })}
+                                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${form.visibility === 'PUBLIC' ? 'bg-violet-600 text-white shadow-lg shadow-violet-900/20' : 'text-gray-500 hover:text-gray-400'}`}
+                            >
+                                Public Gallery
+                            </button>
+                        </div>
+                        <p className="text-[10px] text-gray-500 mt-2 px-1">
+                            {form.visibility === 'PUBLIC' ? 'Everyone can see and fork this prompt.' : 'Only you can see this in your private vault.'}
+                        </p>
+                    </div>
+                    <div className="flex gap-3 pt-1">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="flex-1 py-2.5 rounded-lg font-medium text-gray-400 bg-gray-800 hover:bg-gray-700 border border-gray-700 transition"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="flex-1 py-2.5 rounded-lg font-semibold text-white bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                        >
+                            {loading ? 'Creating…' : 'Create Prompt'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    )
+}
